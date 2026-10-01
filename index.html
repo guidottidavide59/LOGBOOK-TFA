@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Il mio logbook di volo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{--bg:#0d0f16;--panel:#171a24;--ink:#eef0f6;--mute:#9aa1b4;--line:#2a2e3c;--accent:#b7bffd;--onacc:#12141c;--hot:#f5a524;--good:#43c97a;--bad:#ff8a80;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{--bg:#eef2f5;--panel:#fff;--ink:#12263a;--mute:#5b6b7a;--line:#d3dce4;--accent:#0b6e8a;--onacc:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f16}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+main{padding:18px 20px 48px;min-width:0}
+h1{font:700 2rem/1.1 "Barlow Condensed",Barlow,sans-serif;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 20px}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+.t{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.t b{display:block;font:700 1.7rem/1.1 "Barlow Condensed",sans-serif;color:var(--accent)}
+.t.main b{color:var(--hot)}
+.t span{color:var(--mute);font-size:.85rem}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:20px}
+h2{font:700 1.2rem "Barlow Condensed",sans-serif;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:3px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.wide{grid-column:1/-1}
+button{font:600 1rem Barlow,sans-serif;border:0;border-radius:4px;padding:9px 16px;background:var(--accent);color:var(--onacc);cursor:pointer}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.del{background:transparent;color:var(--bad);padding:4px 8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;white-space:nowrap}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:600}
+td.n,th.n{text-align:right}
+.empty{color:var(--mute);padding:12px 0}
+.note{font-size:.85rem;color:var(--mute);margin-top:10px}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100%}
+aside{background:#000;padding:20px 12px;border-right:1px solid var(--line)}
+.brand{font:700 1.3rem "Barlow Condensed",sans-serif;padding:0 10px 16px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{text-align:left;background:transparent;color:var(--mute);padding:11px 14px;border-radius:8px}
+.nav button.on{background:#1d2130;color:#fff}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.hr{display:flex;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.ovtop{display:grid;grid-template-columns:5fr 6fr;gap:16px;margin-bottom:16px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;background:#242836;color:var(--ink)}
+.pill.add{background:var(--accent);color:var(--onacc)}
+.pill.out{background:transparent;border:1px solid var(--mute);padding:8px 26px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));border-bottom:1px solid var(--line);margin:10px 0 8px}
+.st{padding:4px 10px;border-left:1px solid var(--line)}.st:first-child{border-left:0;padding-left:0}
+.st span{font-size:.8rem;color:var(--mute);display:block}.st b{font-size:1.5rem}
+.st i{font-size:.75rem;color:var(--mute);font-style:normal;font-weight:400}
+svg .ax{fill:var(--mute);font-size:12px}svg .gl{stroke:var(--line)}svg .bar{fill:var(--accent)}
+.dot{width:14px;height:14px;border-radius:50%;display:inline-block}.dot.g{background:var(--good)}.dot.o{background:var(--hot)}
+.rl{display:flex;gap:8px;align-items:center}.rl span{margin-left:auto}
+.bar0{height:5px;background:#3a3e4c;border-radius:3px;margin:4px 0 11px}.bar0 u{display:block;height:100%;background:var(--accent);border-radius:3px}
+.acs{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.ac{width:270px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+.ph{height:150px;border-radius:8px;background:linear-gradient(160deg,#3a5a80,#8fb4d6);display:grid;place-items:center;color:#e8f0f8;margin-bottom:8px}
+.al{display:flex;justify-content:space-between;font-size:.9rem}.al span{color:var(--mute)}
+.pl th{font-size:.75rem;letter-spacing:.04em}.tr{cursor:pointer}.sb td{color:var(--mute)}
+@media(max-width:900px){.ovtop{grid-template-columns:1fr}}
+@media(max-width:760px){.app{grid-template-columns:1fr}aside{padding:8px;border:0;border-bottom:1px solid var(--line);overflow-x:auto}.brand{display:none}.nav{flex-direction:row}.nav button{white-space:nowrap}}
+.tb{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tb input{flex:1;min-width:140px;max-width:280px;border-radius:999px;padding:11px 18px;background:#242836;border:0}
+#fpan{margin-bottom:12px}
+.sumbar{display:flex;justify-content:center;flex-wrap:wrap;background:#07080c;padding:18px 0;border-radius:14px 14px 0 0}
+.sumbar div{padding:0 18px;border-left:1px solid var(--line);text-align:center}.sumbar div:first-child{border:0}
+.sumbar b{display:block;font-size:1.6rem;line-height:1.1}.sumbar span{font-size:.75rem;color:var(--mute)}
+.mh{background:#07080c;padding:12px 14px;color:var(--mute);font-size:1.05rem}
+.fr{display:grid;grid-template-columns:74px 130px 1.3fr 1fr 110px 2.2fr 34px;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);background:#0b0d13}
+.rb{padding:12px 6px;border-radius:6px;text-align:center;font-weight:700;font-size:.8rem;background:#2c3345}.rb.d{background:#1f8a4c}.rb.p{background:#2f6fd0}
+.fo b{font-size:1.1rem}.fo small,.fa small{display:block;color:var(--mute)}.fa b{font-size:1rem}
+.ft{font-size:1.25rem;font-weight:600}
+.fc{display:flex;flex-wrap:wrap;gap:6px}.ch{background:#1f2331;border-radius:8px;padding:5px 9px;font-size:.82rem}
+.fm{position:relative}.kb{background:transparent;color:var(--ink);padding:4px 10px;font-size:1.3rem}
+.mn{position:absolute;right:0;top:100%;z-index:5;background:#242836;border:1px solid var(--line);border-radius:8px;padding:4px;display:flex;flex-direction:column;min-width:110px}
+.mn[hidden]{display:none}.mb{background:transparent;color:var(--ink);text-align:left}
+@media(max-width:900px){.fr{display:flex;flex-wrap:wrap}.fd{flex:1}.fo,.fc{flex:1 1 100%}.fm{margin-left:auto}}
+.tt{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pers{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin:14px 0 8px}
+.chip{background:transparent;color:var(--ink);padding:8px 20px;border-radius:999px}.chip.on{background:var(--accent);color:var(--onacc)}
+.sec{border-radius:14px;margin-bottom:10px}.sec.closed{background:var(--panel)}
+.ah{display:flex;justify-content:space-between;width:100%;background:transparent;color:var(--ink);padding:16px 20px;font-size:1.15rem;text-align:left}
+.tg{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:4px 10px 16px}
+.tl{flex:0 1 230px;background:var(--panel);border-radius:16px;padding:14px;text-align:center}
+.sec.closed .tl{background:#0d0f16}
+.tl span{display:block;color:var(--mute);font-weight:700;font-size:.85rem;letter-spacing:.03em}
+.tl b{display:block;font-size:2rem;line-height:1.3}.tl small{color:var(--mute)}
+.tcw{padding:4px 0 8px}
+.tc{background:var(--panel);border-radius:14px;padding:16px 20px;margin-bottom:10px}
+.tcr{display:flex;justify-content:space-between;font-size:1.3rem}
+.tcs{display:flex;gap:30px;flex-wrap:wrap;margin:12px 0;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.tcs small{display:block;font-size:.7rem;font-weight:700;color:var(--mute)}
+.tcl{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute)}
+.ph{position:relative;overflow:hidden}.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.phb{position:absolute;bottom:8px;padding:5px 10px;font-size:.8rem;background:rgba(0,0,0,.65);color:#fff}
+.phb.a{right:8px}.phb.b{left:8px}
+.fa{display:flex;gap:10px;align-items:center}.fa img{width:64px;height:44px;object-fit:cover;border-radius:6px}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pane{display:none}.pane.on{display:block}
+.warn{color:var(--hot);font-size:.9rem;margin:4px 0}
+.ok{color:var(--accent)}.exp{color:var(--bad);font-weight:600}.soon{color:var(--hot);font-weight:600}
+@media print{.tabs,#addsec,.row,.note,.del,#docform,.tb,#fpan,.fm,aside,.hr{display:none!important}.pane{display:block!important}body{background:#fff;color:#000}section,.t{border-color:#999;background:#fff}}
+@media(min-width:761px){html{zoom:.87}}
+[hidden]{display:none!important}
+.authbox{min-height:100vh;display:grid;place-items:center;padding:20px}.authbox .card{width:min(420px,100%);display:grid;gap:12px;padding:22px}
+.chk{flex-direction:row;align-items:center;gap:8px}.chk input{width:auto}.chk a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div id="auth" class="authbox" hidden><div class="card"><h1>✈ Logbook</h1><p class="sub">Il tuo logbook di volo online: accedi o crea un account gratuito.</p>
+<label>Email<input id="aem" type="email" autocomplete="email"></label>
+<label>Password (min. 8 caratteri)<input id="apw" type="password" autocomplete="current-password"></label>
+<label class="chk"><input type="checkbox" id="aok"><span>Ho letto l'<a href="privacy.html" target="_blank">informativa privacy</a> (necessario per registrarsi)</span></label>
+<div class="row"><button id="ain">Accedi</button><button class="alt" id="aup">Registrati</button><button class="alt" id="arst">Password dimenticata</button></div>
+<p id="amsg" class="note"></p></div></div>
+<div class="app" id="app" hidden><aside><div class="brand">✈ Logbook</div><nav class="nav">
+<button data-p="ov" class="on">Overview</button><button data-p="p1">Voli</button><button data-p="p2">Totali</button><button data-p="p3">Certificati</button><button data-p="p4">Import / Export</button></nav></aside>
+<main>
+<div class="hd"><h1 id="ttl">Overview</h1><div class="hr"><span id="st" class="note"></span><button class="pill" id="warnpill"></button><button class="pill add" id="addtop">+ Aggiungi</button></div></div>
+<div class="pane on" id="ov">
+<div class="ovtop">
+<div class="card"><span class="pill out">Totali</span><div class="stats" id="ovstats"></div><div id="ovchart"></div></div>
+<div class="card" id="ovrec"></div>
+</div>
+<div class="acs" id="ovac"></div><input type="file" id="phfile" accept="image/*" hidden>
+<div class="card scroll" id="ovtype"></div>
+</div>
+<div class="pane" id="p1">
+<div class="tb"><input id="q" type="search" placeholder="Cerca" aria-label="Cerca"><button class="pill" id="fbtn">Filtri</button></div>
+<div class="card" id="fpan" hidden><div class="grid"><label>Ruolo<select id="frole"><option value="">Tutti i ruoli</option><option>PIC</option><option>Dual</option><option>Copilota</option><option>Istruttore</option></select></label><label>Anno<select id="fy"></select></label><label>Aeromobile<select id="fa"></select></label></div></div>
+<section id="addsec" hidden>
+<h2>Volo</h2>
+<div class="grid">
+<label>Data<input type="date" id="date"></label>
+<label>Aeromobile<input id="type" placeholder="es. C172"></label>
+<label>Marche<input id="reg" placeholder="es. I-ABCD"></label>
+<label>Da<input id="from" placeholder="LIRN"></label>
+<label>A<input id="to" placeholder="LIRA"></label>
+<label>Tempo totale (h:mm)<input id="total" inputmode="decimal" placeholder="1:59"></label>
+<label>Ruolo<select id="role"><option>PIC</option><option>Dual</option><option>Copilota</option><option>Istruttore</option></select></label>
+<label>Notturno (h:mm)<input id="night" inputmode="decimal" value="0"></label>
+<label>IFR (h:mm)<input id="ifr" inputmode="decimal" value="0"></label>
+<label>Atterraggi<input type="number" id="ldg" min="0" value="1"></label>
+<label>Partenza (UTC)<input type="time" id="dep"></label>
+<label>Arrivo (UTC)<input type="time" id="arr"></label>
+<label>PIC / istruttore<input id="pic" placeholder="Nome"></label>
+<label class="wide">Note<input id="notes" placeholder="Opzionale"></label>
+</div>
+<div class="row"><button id="add">Salva volo</button><button class="alt" id="cancel">Annulla</button><span id="msg" class="note"></span></div>
+</section>
+<div id="audit"></div>
+<div class="sumbar" id="fsum"></div>
+<div id="list"></div>
+</div>
+<div class="pane" id="p2">
+<div class="tt"><button class="pill" id="tfb">Filtri</button><div class="hr"><button class="pill out" id="tan">Analizza</button><button class="pill add" id="tsh">Mostra voli</button></div></div>
+<div class="card" id="tfp" hidden style="margin-top:10px"><div class="grid"><label>Aeromobile<select id="tfa"></select></label><label>Tipo<select id="tft"></select></label></div></div>
+<div class="pers" id="tper"></div>
+<div id="tbody"></div>
+</div>
+<div class="pane" id="p3">
+<section><h2>Licenze, abilitazioni e visite mediche</h2>
+<div class="grid" id="docform">
+<label>Nome<input id="dname" placeholder="es. Visita medica classe 2"></label>
+<label>Scadenza<input type="date" id="dexp"></label>
+<label style="justify-content:flex-end"><button id="dadd">Aggiungi</button></label></div>
+<div class="scroll" id="docs"></div></section>
+</div>
+<div class="pane" id="p4">
+<section><h2>Esporta e importa</h2>
+<div class="row">
+<button id="print">Stampa / PDF</button>
+<button class="alt" id="csv">Esporta CSV</button>
+<button class="alt" id="json">Backup JSON</button>
+<button class="alt" id="imp">Ripristina backup</button>
+<button class="alt" id="impcsv">Importa CSV</button>
+<input type="file" id="file" accept="application/json" hidden>
+<input type="file" id="filecsv" accept=".csv,text/csv" hidden>
+</div>
+<p class="note">Il CSV da importare usa le colonne: date,type,reg,from,to,role,total,night,ifr,ldg,dep,arr,pic,notes (come l'export). I dati sono salvati nel tuo account online. Il backup JSON è una copia di sicurezza da conservare tu.</p>
+<p id="msg2" class="note"></p>
+</section>
+<section><h2>Account</h2><p class="note" id="who"></p>
+<div class="row"><button class="alt" id="out">Esci</button><button class="alt" id="delacc">Elimina account e tutti i dati</button></div></section></div>
+</main></div>
+<script>
+const sb=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+let flights=[],docs=[],photos={},user=null,saveT=null;
+const $=id=>document.getElementById(id);
+const setSt=t=>{$("st").textContent=t};
+const okImg=v=>typeof v==="string"&&/^data:image\/(jpeg|png|webp);base64,/.test(v);
+async function load(){
+  setSt("Carico…");
+  const [l,p]=await Promise.all([sb.from("logbooks").select("flights,docs").maybeSingle(),sb.from("photos").select("reg,image")]);
+  if(l.error||p.error){setSt("Errore di caricamento: "+(l.error||p.error).message);return}
+  flights=(l.data&&l.data.flights)||[];docs=(l.data&&l.data.docs)||[];photos={};
+  (p.data||[]).forEach(r=>{if(okImg(r.image))photos[r.reg]=r.image});setSt("");
+}
+function save(){clearTimeout(saveT);setSt("Salvo…");
+  saveT=setTimeout(async()=>{const {error}=await sb.from("logbooks").upsert({user_id:user.id,flights,docs,updated_at:new Date().toISOString()});
+    setSt(error?"Errore di salvataggio: "+error.message:"Salvato")},300);return true}
+async function putPhoto(reg){if(!okImg(photos[reg])){delete photos[reg];return}
+  const {error}=await sb.from("photos").upsert({user_id:user.id,reg,image:photos[reg]});
+  if(error){delete photos[reg];alert("Foto non salvata: "+error.message);render()}}
+async function delPhoto(reg){delete photos[reg];await sb.from("photos").delete().eq("reg",reg)}
+const sum=(k,a=flights)=>a.reduce((x,f)=>x+(+f[k]||0),0);
+const hm=h=>{const m=Math.round((+h||0)*60);return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")};const fmt=hm;const pt=v=>{v=String(v||"").trim().replace(",",".");if(v.includes(":")){const[a,b]=v.split(":");return(+a||0)+(+b||0)/60}return parseFloat(v)||0};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const days=d=>(Date.now()-new Date(d).getTime())/864e5;
+const within=n=>flights.filter(f=>days(f.date)<=n&&days(f.date)>=-1);
+function audit(){const w=[],seen={};
+ flights.forEach(f=>{const l=`${f.date} ${f.reg||f.type||""}`;
+  if(!f.type||!f.reg||!f.from||!f.to)w.push(`${l}: mancano tipo, marche o tratta.`);
+  if(+f.night>+f.total)w.push(`${l}: notturno superiore al tempo totale.`);
+  if(+f.ifr>+f.total)w.push(`${l}: IFR superiore al tempo totale.`);
+  if(new Date(f.date)>new Date(Date.now()+864e5))w.push(`${l}: data nel futuro.`);
+  const k=[f.date,f.reg,f.from,f.to,f.total].join("|");if(seen[k])w.push(`${l}: possibile duplicato (${f.from}-${f.to}).`);seen[k]=1});
+ return w}
+function render(){renderOv();renderTot();
+  const w=audit();
+  $("audit").innerHTML=w.length?`<p class="warn"><b>${w.length} controll${w.length>1?"i":"o"} da rivedere</b></p>`+w.slice(0,8).map(x=>`<p class="warn">${esc(x)}</p>`).join(""):"";
+  renderList();
+  const ds=[...docs].sort((a,b)=>a.exp.localeCompare(b.exp));
+  $("docs").innerHTML=ds.length?`<table><thead><tr><th>Documento</th><th>Scadenza</th><th>Stato</th><th></th></tr></thead><tbody>${ds.map(d=>{const left=Math.ceil(-days(d.exp));const c=left<0?"exp":left<=60?"soon":"ok";const t=left<0?`Scaduto da ${-left} gg`:`Tra ${left} gg`;return `<tr><td>${esc(d.name)}</td><td>${esc(d.exp)}</td><td class="${c}">${t}</td><td><button class="del" data-did="${d.id}">Elimina</button></td></tr>`}).join("")}</tbody></table>`:'<div class="empty">Aggiungi licenza, abilitazioni e visita medica con la loro scadenza.</div>';
+}
+function show(p){document.querySelectorAll(".nav button,.pane").forEach(x=>x.classList.remove("on"));const b=document.querySelector('.nav button[data-p="'+p+'"]');b.classList.add("on");$(p).classList.add("on");$("ttl").textContent=b.textContent}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>show(b.dataset.p));
+$("addtop").onclick=()=>openForm();
+$("date").value=new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let editId=null,autoT=true;
+function calc(){if(!autoT)return;const a=$("dep").value,b=$("arr").value;if(!a||!b)return;const m=((+b.slice(0,2)*60+ +b.slice(3))-(+a.slice(0,2)*60+ +a.slice(3))+1440)%1440;$("total").value=Math.floor(m/60)+":"+String(m%60).padStart(2,"0")}
+$("dep").oninput=$("arr").oninput=calc;$("total").oninput=()=>{autoT=false};
+function openForm(f,dup){show("p1");$("addsec").hidden=false;editId=f&&!dup?f.id:null;autoT=!f||!!dup;
+ const v={date:f?f.date:new Date().toISOString().slice(0,10),type:f?f.type:$("type").value,reg:f?f.reg:$("reg").value,from:f?f.from:"",to:f?f.to:"",total:f?hm(f.total):"",role:f?f.role:$("role").value,night:f?hm(f.night):"0",ifr:f?hm(f.ifr):"0",ldg:f?f.ldg:1,dep:f&&!dup?f.dep||"":"",arr:f&&!dup?f.arr||"":"",pic:f?f.pic||"":$("pic").value,notes:f?f.notes||"":""};
+ Object.keys(v).forEach(k=>$(k).value=v[k]);$("add").textContent=f&&!dup?"Aggiorna volo":"Salva volo";$("msg").textContent=dup?"Volo duplicato: inserisci gli orari e salva.":"";$("addsec").scrollIntoView({block:"nearest"});$("date").focus()}
+$("add").onclick=()=>{const total=pt($("total").value);
+ if(!$("date").value||!(total>0)){$("msg").textContent="Inserisci data e tempo totale.";return}
+ const o={id:editId||uid(),date:$("date").value,type:$("type").value.trim().toUpperCase(),reg:$("reg").value.trim().toUpperCase(),from:$("from").value.trim().toUpperCase(),to:$("to").value.trim().toUpperCase(),total,role:$("role").value,night:pt($("night").value),ifr:pt($("ifr").value),ldg:parseInt($("ldg").value)||0,dep:$("dep").value,arr:$("arr").value,pic:$("pic").value.trim(),notes:$("notes").value.trim()};
+ if(editId)flights=flights.map(f=>f.id===editId?o:f);else flights.push(o);
+ editId=null;if(save())$("addsec").hidden=true;render()};
+$("cancel").onclick=()=>{editId=null;$("addsec").hidden=true};
+$("fbtn").onclick=()=>{$("fpan").hidden=!$("fpan").hidden};
+$("q").oninput=$("frole").onchange=$("fy").onchange=$("fa").onchange=()=>renderList();
+function fill(id,vals,lbl){const e=$(id),c=e.value;e.innerHTML=`<option value="">${lbl}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");e.value=vals.includes(c)?c:""}
+function renderList(){
+ fill("fy",[...new Set(flights.map(f=>f.date.slice(0,4)))].sort().reverse(),"Tutti gli anni");
+ fill("fa",[...new Set(flights.map(f=>f.reg).filter(Boolean))].sort(),"Tutti gli aeromobili");
+ const q=$("q").value.trim().toLowerCase(),r=$("frole").value,y=$("fy").value,ac=$("fa").value;
+ const fl=flights.filter(f=>(!r||f.role===r)&&(!y||f.date.slice(0,4)===y)&&(!ac||f.reg===ac)&&(!q||[f.type,f.reg,f.from,f.to,f.role,f.pic,f.notes,f.date].join(" ").toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||(b.dep||"").localeCompare(a.dep||""));
+ $("fsum").innerHTML=[[hm(sum("total",fl)),"TEMPO BLOCCHI"],[hm(sum("total",fl.filter(f=>f.role==="PIC"||f.role==="Istruttore"))),"PIC"],[hm(sum("total",fl.filter(f=>f.role==="Dual"))),"DUAL"],[fl.length,"VOLI"],[sum("ldg",fl),"ATT."]].map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join("");
+ if(!fl.length){$("list").innerHTML=`<div class="empty card">${flights.length?"Nessun volo corrisponde ai filtri.":"Nessun volo: premi Aggiungi per registrare il primo."}</div>`;return}
+ let h="",cur="";
+ fl.forEach(f=>{const m=f.date.slice(0,7),ro=(f.role||"").toUpperCase();
+  if(m!==cur){cur=m;const t=new Date(f.date+"T00:00:00").toLocaleDateString("it-IT",{month:"long",year:"numeric"});h+=`<div class="mh">${t[0].toUpperCase()+t.slice(1)}</div>`}
+  const nt=+f.night>0,sun=nt?"☾":"☀",dt=new Date(f.date+"T00:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"});
+  h+=`<div class="fr"><span class="rb ${{DUAL:"d",PIC:"p"}[ro]||""}">${esc(ro)}</span><span class="fd">${dt} UTC</span><div class="fo"><b>${esc(f.from)} ✈ ${esc(f.to)}</b><small>${f.dep&&f.arr?`${f.dep} UTC-${f.arr} UTC · `:""}${hm(f.total)}</small></div><div class="fa">${photos[f.reg]?`<img src="${photos[f.reg]}" alt="">`:""}<div><b>${esc(f.reg)}</b><small>${esc(f.type)}</small></div></div><div class="ft">${hm(f.total)} · ${f.ldg} ${sun}</div><div class="fc">${f.pic?`<span class="ch">PIC·${esc(f.pic)}</span>`:""}<span class="ch">${esc(ro)}</span><span class="ch">TO·${f.ldg} ↗</span><span class="ch">LDG·${f.ldg} ${sun}</span><span class="ch">${+f.ifr>0?"IFR":"VISUAL"}</span>${nt?`<span class="ch">NOTTE·${hm(f.night)}</span>`:""}${f.notes?`<span class="ch">${esc(f.notes)}</span>`:""}</div><div class="fm"><button class="kb" data-m="1" aria-label="Azioni volo">⋮</button><div class="mn" hidden><button class="mb" data-e="${f.id}">Modifica</button><button class="mb" data-c="${f.id}">Duplica</button><button class="mb" data-d="${f.id}">Elimina</button></div></div></div>`});
+ $("list").innerHTML=h}
+$("list").onclick=e=>{const t=e.target;
+ document.querySelectorAll(".mn").forEach(m=>{if(!t.dataset.m||m.previousElementSibling!==t)m.hidden=true});
+ if(t.dataset.m){const m=t.nextElementSibling;m.hidden=!m.hidden}
+ else if(t.dataset.e)openForm(flights.find(f=>f.id===t.dataset.e));
+ else if(t.dataset.c)openForm(flights.find(f=>f.id===t.dataset.c),true);
+ else if(t.dataset.d&&confirm("Eliminare questo volo?")){flights=flights.filter(f=>f.id!==t.dataset.d);save();render()}};
+$("dadd").onclick=()=>{if(!$("dname").value.trim()||!$("dexp").value)return;docs.push({id:uid(),name:$("dname").value.trim(),exp:$("dexp").value});$("dname").value="";save();render()};
+$("docs").onclick=e=>{const id=e.target.dataset&&e.target.dataset.did;if(id){docs=docs.filter(d=>d.id!==id);save();render()}};
+function download(name,text,mime){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;a.click()}
+const H=["date","type","reg","from","to","role","total","night","ifr","ldg","dep","arr","pic","notes"];
+$("json").onclick=()=>download("logbook-backup.json",JSON.stringify({flights,docs,photos},null,1),"application/json");
+$("csv").onclick=()=>{const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  download("logbook.csv",[H.join(",")].concat(flights.map(f=>H.map(k=>q(f[k])).join(","))).join("\n"),"text/csv")};
+$("print").onclick=()=>{show("p1");window.print()};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){flights=d}else if(d&&Array.isArray(d.flights)){flights=d.flights;docs=d.docs||[];photos=d.photos||{}}else throw 0;save();Object.keys(photos).forEach(putPhoto);render();$("msg2").textContent="Backup ripristinato."}catch(x){$("msg2").textContent="File non valido."}};if(e.target.files[0])r.readAsText(e.target.files[0])};
+function parseCSV(t){const rows=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==","){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;r.push(c);rows.push(r);r=[];c=""}else c+=ch}if(c||r.length){r.push(c);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()))}
+$("impcsv").onclick=()=>$("filecsv").click();
+$("filecsv").onchange=e=>{const r=new FileReader();r.onload=()=>{try{const rows=parseCSV(r.result),h=rows[0].map(x=>x.trim().toLowerCase());if(!h.includes("date")||!h.includes("total"))throw 0;let n=0;rows.slice(1).forEach(v=>{const o={};h.forEach((k,i)=>o[k]=(v[i]||"").trim());if(!o.date||!(parseFloat(o.total)>0))return;flights.push({id:uid(),date:o.date,type:(o.type||"").toUpperCase(),reg:(o.reg||"").toUpperCase(),from:(o.from||"").toUpperCase(),to:(o.to||"").toUpperCase(),role:o.role||"PIC",total:parseFloat(o.total),night:parseFloat(o.night)||0,ifr:parseFloat(o.ifr)||0,ldg:parseInt(o.ldg)||0,dep:o.dep||"",arr:o.arr||"",pic:o.pic||"",notes:o.notes||""});n++});save();render();$("msg2").textContent=n+" voli importati."}catch(x){$("msg2").textContent="CSV non valido: servono almeno le colonne date e total."}};if(e.target.files[0])r.readAsText(e.target.files[0])};
+
+const PLANE='<svg viewBox="0 0 64 64" width="72" height="72"><path d="M32 4c2 0 3 2 3 5v16l24 14v6L35 38v14l7 5v4l-10-3-10 3v-4l7-5V38L5 45v-6l24-14V9c0-3 1-5 3-5z" fill="currentColor"/></svg>';
+function rel(d){const n=Math.floor(days(d));if(n<1)return"oggi";if(n<30)return n+" giorni fa";if(n<365){const m=Math.floor(n/30);return m+(m==1?" mese fa":" mesi fa")}const y=Math.floor(n/365);return y+(y==1?" anno fa":" anni fa")}
+function renderOv(){
+ const st=(l,a)=>`<div class="st"><span>${l}</span><b>${hm(sum("total",a))} <i>${sum("ldg",a)} att.</i></b></div>`;
+ $("ovstats").innerHTML=st("Tempo totale",flights)+st("28 giorni",within(28))+st("90 giorni",within(90))+st("12 mesi",within(365));
+ const now=new Date(),mo=[],nm=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+ for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);mo.push({y:d.getFullYear(),m:d.getMonth(),h:0})}
+ flights.forEach(f=>{const d=new Date(f.date);const x=mo.find(o=>o.y==d.getFullYear()&&o.m==d.getMonth());if(x)x.h+=+f.total||0});
+ const mx=Math.max(10,Math.ceil(Math.max(...mo.map(o=>o.h))/10)*10),W=700,H=190,L=30,bw=(W-L)/12,yy=h=>H-h/mx*(H-14);
+ let v=`<svg viewBox="0 0 ${W} ${H+24}" role="img" aria-label="Ore per mese">`;
+ [0,mx/2,mx].forEach(t=>{v+=`<text x="0" y="${yy(t)+4}" class="ax">${t}</text><line x1="${L}" x2="${W}" y1="${yy(t)}" y2="${yy(t)}" class="gl"/>`});
+ mo.forEach((o,i)=>{if(o.h>0)v+=`<rect x="${L+i*bw+bw*.25}" y="${yy(o.h)}" width="${bw*.5}" height="${H-yy(o.h)}" rx="3" class="bar"><title>${hm(o.h)}</title></rect>`;v+=`<text x="${L+i*bw+bw/2}" y="${H+18}" text-anchor="middle" class="ax">${nm[o.m]}</text>`});
+ $("ovchart").innerHTML=v+"</svg>";
+ const lg=[];flights.forEach(f=>{for(let k=0;k<(+f.ldg||0);k++)lg.push(f.date)});lg.sort().reverse();
+ const l90=lg.filter(d=>days(d)<=90),left=l90.length>=3?Math.max(0,Math.ceil(90-days(l90[2]))):0;
+ const ir=docs.find(d=>/\bIR\b|strument/i.test(d.name)),irL=ir?Math.ceil(-days(ir.exp)):null,irOk=irL!==null&&irL>=0;
+ const nl=flights.filter(f=>+f.night>0&&days(f.date)<=90).reduce((a,f)=>a+(+f.ldg||0),0);
+ const row=(ok,l,r,p)=>`<div><div class="rl">${ok===null?"":`<i class="dot ${ok?"g":"o"}"></i>`}<b>${l}</b><span>${r}</span></div><div class="bar0"><u style="width:${Math.max(0,Math.min(100,p))}%"></u></div></div>`;
+ const yr=String(now.getFullYear()),cy=sum("total",flights.filter(f=>f.date.slice(0,4)===yr));
+ $("ovrec").innerHTML=
+  row(left>0,`Recency passeggeri | ${left} giorni`,`${l90.length} att. in 90 gg`,left/90*100)+
+  row(irOk,"Abilitazione IR",ir?(irOk?`Valida, ${irL} giorni`:"Scaduta"):"Aggiungi IR in Certificati",irOk?Math.min(100,irL/365*100):0)+
+  row(nightOk=irOk||nl>=1,"Notturno","IR valido o 1 att. notturno in 90 gg",nightOk?100:0)+
+  row(null,`Ultimi 28 giorni | ${hm(sum("total",within(28)))}`,"max 100 h",sum("total",within(28))/100*100)+
+  row(null,`Ultimi 12 mesi | ${hm(sum("total",within(365)))}`,"max 1000 h",sum("total",within(365))/10)+
+  row(null,`Anno ${yr} | ${hm(cy)}`,"max 900 h",cy/9);
+ const rg={};flights.forEach(f=>{const r=f.reg||"n/d";if(!rg[r]||f.date>rg[r].date)rg[r]=f});
+ $("ovac").innerHTML=Object.values(rg).sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<div class="ac"><div class="ph">${photos[f.reg]?`<img src="${photos[f.reg]}" alt="${esc(f.reg)}">`:PLANE}${f.reg?`<button class="phb a" data-ph="${esc(f.reg)}">${photos[f.reg]?"Cambia foto":"Aggiungi foto"}</button>${photos[f.reg]?`<button class="phb b" data-rm="${esc(f.reg)}">Rimuovi</button>`:""}`:""}</div><div class="al"><b>${esc(f.reg||"n/d")}</b><b>${esc(f.type)}</b></div><div class="al"><span>${esc(f.from)} ✈ ${esc(f.to)}</span><span>${rel(f.date)}</span></div></div>`).join("");
+ const ad=(o,f)=>{o.t=(o.t||0)+(+f.total||0);o.n=(o.n||0)+1;o.l=(o.l||0)+(+f.ldg||0);if(f.role==="PIC"||f.role==="Istruttore")o.p=(o.p||0)+(+f.total||0);if(f.role==="Dual")o.d=(o.d||0)+(+f.total||0);if(!o.f||f.date>o.f.date)o.f=f};
+ const g={},all={};flights.forEach(f=>{const o=g[f.type||"n/d"]=g[f.type||"n/d"]||{r:{}};ad(o,f);ad(all,f);const r=o.r[f.reg||"n/d"]=o.r[f.reg||"n/d"]||{};ad(r,f)});
+ const tr=(l,o,c,k)=>`<tr class="${c}" data-k="${k}" ${c==="sb"?"hidden":""}><td>${c==="tr"?"▸ ":"&nbsp;&nbsp;"}${esc(l)}</td><td class="n">${hm(o.t)}</td><td class="n">#${o.n}/${o.l}</td><td class="n">${hm(o.p)}</td><td class="n">${hm(o.d)}</td><td class="n">${o.f?esc(o.f.from)+" ✈ "+esc(o.f.to)+" · "+rel(o.f.date):""}</td></tr>`;
+ const body=Object.keys(g).sort((a,b)=>g[b].t-g[a].t).map((k,i)=>tr(k,g[k],"tr",i)+Object.keys(g[k].r).map(r=>tr(r,g[k].r[r],"sb",i)).join("")).join("");
+ $("ovtype").innerHTML=flights.length?`<table class="pl"><thead><tr><th>TIPO</th><th class="n">TEMPO TOTALE</th><th class="n">#VOLI/ATT.</th><th class="n">PIC</th><th class="n">DUAL</th><th class="n">ULTIMO VOLO</th></tr></thead><tbody>${body}<tr><td><b>Totale</b></td><td class="n"><b>${hm(all.t)}</b></td><td class="n">#${all.n}/${all.l}</td><td class="n">${hm(all.p)}</td><td class="n">${hm(all.d)}</td><td></td></tr></tbody></table>`:'<div class="empty">Nessun volo: premi Aggiungi per registrare il primo.</div>';
+ const bad=audit().length,ex=docs.filter(d=>days(d.exp)>0).length,n=bad+ex;
+ $("warnpill").innerHTML=`<i class="dot ${n?"o":"g"}"></i>${n?n+(n>1?" avvisi":" avviso"):"Nessun avviso"}`;$("warnpill").dataset.go=bad?"p1":"p3";
+}
+$("ovtype").onclick=e=>{const r=e.target.closest(".tr");if(!r)return;document.querySelectorAll('#ovtype .sb[data-k="'+r.dataset.k+'"]').forEach(x=>x.hidden=!x.hidden)};
+$("warnpill").onclick=e=>show(e.currentTarget.dataset.go||"p3");
+
+let tper=0;const tOpen={fn:true,ty:true,ca:false,ap:true};
+const PER=[["28D",28],["90D",90],["6M",182],["1Y",365],["2Y",730],["5Y",1825],["10Y",3650],["ALL",0]];
+function renderTot(){
+ $("tper").innerHTML=PER.map(([l,d])=>`<button class="chip ${tper===d?"on":""}" data-d="${d}">${l}</button>`).join("");
+ fill("tfa",[...new Set(flights.map(f=>f.reg).filter(Boolean))].sort(),"Tutti gli aeromobili");
+ fill("tft",[...new Set(flights.map(f=>f.type).filter(Boolean))].sort(),"Tutti i tipi");
+ const ra=$("tfa").value,rt=$("tft").value;
+ const fl=flights.filter(f=>(!tper||days(f.date)<=tper)&&(!ra||f.reg===ra)&&(!rt||f.type===rt));
+ if(!fl.length){$("tbody").innerHTML='<div class="empty card">Nessun volo in questo periodo.</div>';return}
+ const T=x=>x.reduce((s,f)=>s+(+f.total||0),0),N=(k,x)=>x.reduce((s,f)=>s+(+f[k]||0),0);
+ const dl=x=>x.filter(f=>!(+f.night>0)).reduce((s,f)=>s+(+f.ldg||0),0),nl=x=>x.filter(f=>+f.night>0).reduce((s,f)=>s+(+f.ldg||0),0);
+ const sub=x=>[dl(x)?dl(x)+" ☀":"",nl(x)?nl(x)+" ☾":"","#"+x.length].filter(Boolean).join(" ");
+ const tile=(l,v,x)=>`<div class="tl"><span>${l}</span><b>${v}</b>${x?`<small>${sub(x)}</small>`:""}</div>`;
+ const RL=[["PIC","PIC"],["Dual","DUAL"],["Copilota","COPILOTA"],["Istruttore","ISTRUTTORE"]];
+ let fn=tile("TEMPO BLOCCHI TOTALE",hm(T(fl)),fl);
+ RL.forEach(([r,l])=>{const x=fl.filter(f=>f.role===r);if(x.length)fn+=tile(l,hm(T(x)),x)});
+ const g={};fl.forEach(f=>(g[f.type||"n/d"]=g[f.type||"n/d"]||[]).push(f));
+ const ty='<div class="tcw">'+Object.keys(g).sort((p,q)=>T(g[q])-T(g[p])).map(k=>{const x=g[k],l=x.reduce((m,f)=>f.date>m.date?f:m);
+  const c=(n,v)=>`<div><small>${n}</small>${v}</div>`;let cs="";
+  RL.forEach(([r,n])=>{const y=x.filter(f=>f.role===r);if(y.length)cs+=c(n,hm(T(y)))});
+  cs+=c("#ATT.",N("ldg",x))+c("ATT. ☀",dl(x))+(nl(x)?c("ATT. ☾",nl(x)):"")+c("#VOLI",x.length);
+  return `<div class="tc"><div class="tcr"><b>${esc(k)}</b><b>${hm(T(x))}</b></div><div class="tcs">${cs}</div><div class="tcl"><span>Ultimo volo: ${esc(l.from)} ✈ ${esc(l.to)}</span><span>${rel(l.date)}</span></div></div>`}).join("")+'</div>';
+ const nt=N("night",fl),ifr=N("ifr",fl),ap=new Set(fl.flatMap(f=>[f.from,f.to]).filter(Boolean));
+ let ca=tile("TEMPO DIURNO",hm(T(fl)-nt),fl.filter(f=>!(+f.night>0)));
+ if(nt>0)ca+=tile("TEMPO NOTTURNO",hm(nt),fl.filter(f=>+f.night>0));
+ ca+=tile("VFR",hm(T(fl)-ifr),fl.filter(f=>!(+f.ifr>0)));
+ if(ifr>0)ca+=tile("IFR",hm(ifr),fl.filter(f=>+f.ifr>0));
+ ca+=tile("DECOLLI",N("ldg",fl))+tile("ATTERRAGGI",N("ldg",fl),fl)+tile("AEROPORTI VISITATI",ap.size)+tile("NUMERO VOLI",fl.length);
+ const nv=fl.filter(f=>!(+f.ifr>0)).length,ni=fl.length-nv;
+ const ao=tile("VISUAL",nv)+(ni?tile("IFR",ni):"");
+ const sec=(k,t,b,c)=>`<div class="sec ${tOpen[k]?"":"closed"}"><button class="ah" data-s="${k}" aria-expanded="${!!tOpen[k]}"><span>${t}</span><span>${tOpen[k]?"⌃":"⌄"}</span></button>${tOpen[k]?(c?b:`<div class="tg">${b}</div>`):""}</div>`;
+ $("tbody").innerHTML=sec("fn","Funzione",fn)+sec("ty","Tipi",ty,1)+sec("ca","Categoria",ca)+sec("ap","Approccio",ao);
+}
+$("p2").onclick=e=>{const h=e.target.closest(".ah"),c=e.target.closest(".chip");
+ if(h){tOpen[h.dataset.s]=!tOpen[h.dataset.s];renderTot()}else if(c){tper=+c.dataset.d;renderTot()}};
+$("tfa").onchange=$("tft").onchange=()=>renderTot();
+$("tfb").onclick=()=>{$("tfp").hidden=!$("tfp").hidden};
+$("tan").onclick=()=>show("ov");$("tsh").onclick=()=>show("p1");
+
+let phReg=null;
+$("ovac").onclick=e=>{const t=e.target;
+ if(t.dataset.ph){phReg=t.dataset.ph;$("phfile").value="";$("phfile").click()}
+ else if(t.dataset.rm&&confirm("Rimuovere la foto?")){delPhoto(t.dataset.rm);render()}};
+$("phfile").onchange=e=>{const file=e.target.files[0],reg=phReg;if(!file||!reg)return;
+ const rd=new FileReader();rd.onload=()=>{const im=new Image();
+  im.onload=()=>{const k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+   photos[reg]=c.toDataURL("image/jpeg",.78);putPhoto(reg);render()};
+  im.onerror=()=>alert("Formato immagine non supportato: usa JPG o PNG.");im.src=rd.result};rd.readAsDataURL(file)};
+const amsg=t=>{$("amsg").textContent=t};
+async function enter(session){user=session?session.user:null;$("auth").hidden=!!user;$("app").hidden=!user;
+  if(user){$("who").textContent="Accesso come "+user.email;await load();render()}}
+$("ain").onclick=async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$("aem").value.trim(),password:$("apw").value});
+  if(error)return amsg(/invalid|credentials/i.test(error.message)?"Email o password errate (o email non ancora confermata).":error.message);enter(data.session)};
+$("aup").onclick=async()=>{if(!$("aok").checked)return amsg("Per registrarti spunta l'informativa privacy.");
+  const pw=$("apw").value;if(pw.length<8)return amsg("La password deve avere almeno 8 caratteri.");
+  const {data,error}=await sb.auth.signUp({email:$("aem").value.trim(),password:pw});if(error)return amsg(error.message);
+  if(data.session)enter(data.session);else amsg("Quasi fatto: controlla la tua email e clicca il link di conferma, poi accedi.")};
+$("arst").onclick=async()=>{const e=$("aem").value.trim();if(!e)return amsg("Scrivi prima la tua email.");
+  const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin});amsg(error?error.message:"Ti abbiamo inviato un'email per reimpostare la password.")};
+$("out").onclick=async()=>{await sb.auth.signOut();flights=[];docs=[];photos={};enter(null)};
+$("delacc").onclick=async()=>{if(!confirm("Eliminare definitivamente account, voli, certificati e foto? Non si può annullare."))return;
+  const {error}=await sb.rpc("delete_my_account");if(error)return alert("Eliminazione non riuscita: "+error.message);await sb.auth.signOut();flights=[];docs=[];photos={};enter(null)};
+sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_OUT"&&user)enter(null);
+  if(ev==="PASSWORD_RECOVERY"){const p=prompt("Scegli la nuova password (min. 8 caratteri)");if(p&&p.length>=8)sb.auth.updateUser({password:p}).then(r=>alert(r.error?r.error.message:"Password aggiornata."))}});
+sb.auth.getSession().then(({data})=>enter(data.session));
+</script>
+</body>
+</html>
