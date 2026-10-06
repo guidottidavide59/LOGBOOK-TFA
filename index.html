@@ -224,13 +224,14 @@ input[readonly]{cursor:pointer}
 svg.ml .ax{font-size:11px}svg.ml .ln{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round}svg.ml .pt{fill:var(--accent)}svg.ml .vl{fill:var(--ink);font-size:11px;font-weight:600}
 svg.ml .ax{font-size:10.5px}svg.ml .ln{stroke-width:2}svg.ml .vl{font-size:10.5px;paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}.ag{align-items:start}
 .ag{grid-template-columns:repeat(auto-fill,minmax(560px,1fr));grid-auto-rows:1fr;align-items:stretch;gap:14px}@media(max-width:800px){.ag{grid-template-columns:1fr;grid-auto-rows:auto}}
-.cw{display:grid;gap:6px}.cr{display:grid;grid-template-columns:minmax(70px,120px) 1fr 62px;gap:10px;align-items:center}
-.cn{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
-.ct{display:block;height:26px;background:linear-gradient(to right,var(--line) 1px,transparent 1px) 0 0/25% 100%;border-left:1px solid var(--line);border-right:1px solid var(--line)}
-.ct u{display:block;height:100%;background:hsl(var(--h) calc(23% * var(--k)) 46%);border-radius:0 6px 6px 0;text-decoration:none}
-.cv b{display:block;font-size:.85rem;line-height:1.1}.cv small{color:var(--mute);font-size:.68rem}
-.cx{display:flex;justify-content:space-between;color:var(--mute);font-size:.7rem}.cx i{font-style:normal}
-.cw.big .ct{height:38px}.cw.big .cn{font-size:.95rem}.cw.big .cv b{font-size:1rem}.cr:hover .ct u{filter:brightness(1.25)}
+.cwb{display:grid;gap:6px}.cwr{display:grid;grid-template-columns:minmax(70px,120px) 1fr 62px;gap:10px;align-items:center}
+.cwn{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.cwt{display:block;height:26px;background:linear-gradient(to right,var(--line) 1px,transparent 1px) 0 0/25% 100%;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.cwt u{display:block;height:100%;background:hsl(var(--h) calc(23% * var(--k)) 46%);border-radius:0 6px 6px 0;text-decoration:none}
+.cwv b{display:block;font-size:.85rem;line-height:1.1}.cwv small{color:var(--mute);font-size:.68rem}
+.cwa{display:flex;justify-content:space-between;color:var(--mute);font-size:.7rem}.cwa i{font-style:normal}
+.cwb.big .cwt{height:38px}.cwb.big .cwn{font-size:.95rem}.cwb.big .cwv b{font-size:1rem}.cwr:hover .cwt u{filter:brightness(1.25)}
+.cnt{margin:14px 0 28px}
 </style>
 </head>
 <body>
@@ -514,7 +515,7 @@ function renderAna(){
   crew:["Crew",()=>{const m={};fl.forEach(f=>(f.crew||[]).forEach(c=>{const o=m[c.name]=m[c.name]||{h:0,n:0};o.h+=T(f);o.n++}));
    let rows=Object.entries(m).sort((a,b)=>b[1].h-a[1].h);if(!rows.length)return'<div class="empty">No data</div>';if(!det)rows=rows.slice(0,5);
    const mx=Math.max(...rows.map(r=>r[1].h)),ab=n=>{const p=n.trim().split(/\s+/);return p.length>1?p[0][0]+"."+p.slice(1).join(" "):n};
-   return `<div class="cw${det?" big":""}">`+rows.map(([n,o])=>`<div class="cr" title="Hours (${esc(n)}): ${hm(o.h)} · ${o.n} flights"><span class="cn">${esc(ab(n))}</span><span class="ct"><u style="width:${o.h/mx*100}%"></u></span><span class="cv"><b>${hm(o.h)}</b><small>${o.n} flt</small></span></div>`).join("")+`<div class="cr"><span></span><span class="cx">${[0,1,2,3,4].map(k=>`<i>${hm(mx*k/4)}</i>`).join("")}</span><span></span></div></div>`}],
+   return `<div class="cwb${det?" big":""}">`+rows.map(([n,o])=>`<div class="cwr" title="Hours (${esc(n)}): ${hm(o.h)} · ${o.n} flights"><span class="cwn">${esc(ab(n))}</span><span class="cwt"><u style="width:${o.h/mx*100}%"></u></span><span class="cwv"><b>${hm(o.h)}</b><small>${o.n} flt</small></span></div>`).join("")+`<div class="cwr"><span></span><span class="cwa">${[0,1,2,3,4].map(k=>`<i>${hm(mx*k/4)}</i>`).join("")}</span><span></span></div></div>`}],
   role:["Role",()=>hb(grp(f=>[[f.role,T(f)]]),hm)],
   appr:["Approaches",()=>hb(grp(f=>[[f.appr||"VISUAL",1]]))],
   time:["Total time",()=>`<div class="dn"><b style="font-size:1.8rem">${hm(fl.reduce((s,f)=>s+T(f),0))}</b></div>`+hb(grp(f=>[[f.date.slice(0,4),T(f)]]).sort((a,b)=>b[0]<a[0]?-1:1),hm)],
