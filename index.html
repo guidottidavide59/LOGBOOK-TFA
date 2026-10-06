@@ -232,6 +232,9 @@ svg.ml .ax{font-size:10.5px}svg.ml .ln{stroke-width:2}svg.ml .vl{font-size:10.5p
 .cwa{display:flex;justify-content:space-between;color:var(--mute);font-size:.7rem}.cwa i{font-style:normal}
 .cwb.big .cwt{height:38px}.cwb.big .cwn{font-size:.95rem}.cwb.big .cwv b{font-size:1rem}.cwr:hover .cwt u{filter:brightness(1.25)}
 .cnt{margin:14px 0 28px}
+.dph{height:auto;aspect-ratio:16/9;overflow:hidden}.dph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#adph{position:relative;aspect-ratio:16/9;height:auto;overflow:hidden}#adph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.crf{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;background:#000;touch-action:none;cursor:grab;margin:8px 0}.crf img{position:absolute;left:0;top:0;max-width:none;user-select:none;pointer-events:none}
 </style>
 </head>
 <body>
@@ -288,6 +291,7 @@ svg.ml .ax{font-size:10.5px}svg.ml .ln{stroke-width:2}svg.ml .vl{font-size:10.5p
 </div></div>
 <div id="ap" class="ov" hidden><div class="md sm"><input id="aps" type="search" placeholder="Search aircraft"><div id="aplist"></div><div class="row"><button class="pill add" id="apnew">+ New aircraft</button><button class="alt" id="apx">Close</button></div></div></div>
 
+<div id="crp" class="ov" hidden><div class="md sm"><b>Adjust photo</b><p class="note">Drag to reposition and use the slider to zoom. The photo is saved in a fixed 16:9 format.</p><div class="crf" id="crf"><img id="cri" alt=""></div><label>Zoom<input type="range" id="crz" min="1" max="3" step="0.01" value="1"></label><div class="row"><button id="crok">Use photo</button><button class="alt" id="crx">Cancel</button></div></div></div>
 <div id="fd" class="ov" hidden><div class="md dm" id="fdb"></div></div>
 <div id="acd" class="ov" hidden><div class="md dm" id="acdb"></div></div>
 <div id="ad" class="ov" hidden><div class="md sm"><div class="ph" id="adph"></div><label class="alt" style="text-align:center;cursor:pointer">Upload photo<input type="file" id="adfile" accept="image/*" hidden></label>
@@ -410,7 +414,16 @@ $("aplist").onclick=e=>{const c=e.target.closest(".apc");if(!c)return;const a=ac
 function shrink(file,max,cb){if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.78))};im.onerror=()=>alert("Unsupported image format: use JPG or PNG.");im.src=rd.result};rd.readAsDataURL(file)}
 function openAc(reg){const a=reg?acOf(reg):null;adPh=a&&photos[a.reg]||null;$("adreg").value=a?a.reg:"";$("adreg").dataset.old=a?a.reg:"";$("admake").value=a&&a.make||"";$("adtype").value=a&&a.type||"";$("admp").checked=!!(a&&a.mp);$("adeng").value=a&&a.eng||"SE";$("adnote").value=a&&a.note||"";$("addel").hidden=!a;drawAd();$("ad").hidden=false}
 const drawAd=()=>{$("adph").innerHTML=adPh?`<img src="${adPh}" alt="">`:PLANE};
-$("adfile").onchange=e=>shrink(e.target.files[0],720,d=>{adPh=d;drawAd()});
+function cropOpen(file,cb){if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=$("cri");im.onload=()=>{$("crp").hidden=false;requestAnimationFrame(()=>{
+  const fr=$("crf"),fw=fr.clientWidth,fh=fr.clientHeight,iw=im.naturalWidth,ih=im.naturalHeight,s0=Math.max(fw/iw,fh/ih);let z=1,ox=(fw-iw*s0)/2,oy=(fh-ih*s0)/2;$("crz").value=1;
+  const put=()=>{const sc=s0*z;ox=Math.min(0,Math.max(fw-iw*sc,ox));oy=Math.min(0,Math.max(fh-ih*sc,oy));im.style.width=iw*sc+"px";im.style.height=ih*sc+"px";im.style.transform=`translate(${ox}px,${oy}px)`};put();
+  let d=null;fr.onpointerdown=e=>{d=[e.clientX,e.clientY,ox,oy];fr.setPointerCapture(e.pointerId);fr.style.cursor="grabbing"};
+  fr.onpointermove=e=>{if(d){ox=d[2]+e.clientX-d[0];oy=d[3]+e.clientY-d[1];put()}};fr.onpointerup=fr.onpointercancel=()=>{d=null;fr.style.cursor="grab"};
+  $("crz").oninput=()=>{const o=s0*z,cx=(fw/2-ox)/o,cy=(fh/2-oy)/o;z=+$("crz").value;const n=s0*z;ox=fw/2-cx*n;oy=fh/2-cy*n;put()};
+  $("crx").onclick=()=>{$("crp").hidden=true};
+  $("crok").onclick=()=>{const sc=s0*z,c=document.createElement("canvas");c.width=960;c.height=540;c.getContext("2d").drawImage(im,-ox/sc,-oy/sc,fw/sc,fh/sc,0,0,960,540);$("crp").hidden=true;cb(c.toDataURL("image/jpeg",.82))}})};
+  im.onerror=()=>alert("Unsupported image format: use JPG or PNG.");im.src=rd.result};rd.readAsDataURL(file)}
+$("adfile").onchange=e=>{cropOpen(e.target.files[0],d=>{adPh=d;drawAd()});e.target.value=""};
 $("adx").onclick=()=>{$("ad").hidden=true};
 $("adsave").onclick=()=>{const reg=$("adreg").value.trim().toUpperCase();if(!reg){alert("Enter the registration.");return}
  const old=$("adreg").dataset.old,a={reg,make:$("admake").value.trim(),type:$("adtype").value.trim().toUpperCase(),mp:$("admp").checked,eng:$("adeng").value,note:$("adnote").value.trim()};
