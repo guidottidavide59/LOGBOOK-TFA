@@ -235,6 +235,7 @@ svg.ml .ax{font-size:10.5px}svg.ml .ln{stroke-width:2}svg.ml .vl{font-size:10.5p
 .dph{height:auto;aspect-ratio:16/9;overflow:hidden}.dph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #adph{position:relative;aspect-ratio:16/9;height:auto;overflow:hidden}#adph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #crp{z-index:9999}.crf{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;background:#000;touch-action:none;cursor:grab;margin:8px 0}.crf img{position:absolute;left:0;top:0;max-width:none;user-select:none;pointer-events:none}
+.wok,.wrs{margin-left:10px;padding:3px 12px;font-size:.75rem;border-radius:999px}
 </style>
 </head>
 <body>
@@ -344,17 +345,17 @@ const hm=h=>{const m=Math.round((+h||0)*60);return Math.floor(m/60)+":"+String(m
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const days=d=>(Date.now()-new Date(d).getTime())/864e5;
 const within=n=>flights.filter(f=>days(f.date)<=n&&days(f.date)>=-1);
-function audit(){const w=[],seen={};
+function audit(all){const w=[],seen={};
  flights.forEach(f=>{const l=`${f.date} ${f.reg||f.type||""}`;
   if(!f.type||!f.reg||!f.from||!f.to)w.push(`${l}: missing type, registration or route.`);
   if(+f.night>+f.total)w.push(`${l}: night time exceeds total time.`);
   if(+f.ifr>+f.total)w.push(`${l}: IFR time exceeds total time.`);
   if(new Date(f.date)>new Date(Date.now()+864e5))w.push(`${l}: date is in the future.`);
   const k=[f.date,f.reg,f.from,f.to,f.total].join("|");if(seen[k])w.push(`${l}: possible duplicate (${f.from}-${f.to}).`);seen[k]=1});
- return w}
+ return all?w:w.filter(x=>!(profile.ign||[]).includes(x))}
 function render(){applyTheme(profile.theme||lsTheme());drawSw();renderOv();renderTot();renderAcs();renderProf();renderPpl();renderCal();renderApt();renderAna();renderEx();
-  const w=audit();
-  $("audit").innerHTML=w.length?`<p class="warn"><b>${w.length} controll${w.length>1?"i":"o"} da rivedere</b></p>`+w.slice(0,8).map(x=>`<p class="warn">${esc(x)}</p>`).join(""):"";
+  const w=audit(),dis=audit(true).length-w.length;
+  $("audit").innerHTML=(w.length?`<p class="warn"><b>${w.length} controll${w.length>1?"i":"o"} da rivedere</b></p>`+w.slice(0,8).map(x=>`<p class="warn">${esc(x)} <button class="wok alt" data-w="${encodeURIComponent(x)}">✓ Mark as OK</button></p>`).join(""):"")+(dis>0?`<p class="note">${dis} warning${dis>1?"s":""} marked as OK · <button class="wrs alt">Restore</button></p>`:"");
   renderList();
   const ds=[...docs].sort((a,b)=>a.exp.localeCompare(b.exp));
   $("docs").innerHTML=ds.length?`<table><thead><tr><th>Document</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>${ds.map(d=>{const left=Math.ceil(-days(d.exp));const c=left<0?"exp":left<=60?"soon":"ok";const t=left<0?`Expired ${-left} days ago`:`In ${left} days`;return `<tr><td>${esc(d.name)}</td><td>${esc(d.exp)}</td><td class="${c}">${t}</td><td><button class="del" data-did="${d.id}">Delete</button></td></tr>`}).join("")}</tbody></table>`:'<div class="empty">Add your licence, ratings and medical with their expiry dates.</div>';
@@ -696,6 +697,7 @@ function renderOv(){
 }
 $("ovtype").onclick=e=>{const r=e.target.closest(".tr");if(!r)return;document.querySelectorAll('#ovtype .sb[data-k="'+r.dataset.k+'"]').forEach(x=>x.hidden=!x.hidden)};
 $("warnpill").onclick=e=>show(e.currentTarget.dataset.go||"p3");
+$("audit").onclick=e=>{const b=e.target.closest(".wok"),r=e.target.closest(".wrs");if(b){(profile.ign=profile.ign||[]).push(decodeURIComponent(b.dataset.w));save();render()}else if(r){profile.ign=[];save();render()}};
 
 let tper=0;const tOpen={fn:true,ty:true,ca:false,ap:true};
 const PER=[["28D",28],["90D",90],["6M",182],["1Y",365],["2Y",730],["5Y",1825],["10Y",3650],["ALL",0]];
