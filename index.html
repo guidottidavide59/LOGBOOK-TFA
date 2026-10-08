@@ -234,7 +234,7 @@ svg.ml .ax{font-size:10.5px}svg.ml .ln{stroke-width:2}svg.ml .vl{font-size:10.5p
 .cnt{margin:14px 0 28px}
 .dph{height:auto;aspect-ratio:16/9;overflow:hidden}.dph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #adph{position:relative;aspect-ratio:16/9;height:auto;overflow:hidden}#adph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.crf{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;background:#000;touch-action:none;cursor:grab;margin:8px 0}.crf img{position:absolute;left:0;top:0;max-width:none;user-select:none;pointer-events:none}
+#crp{z-index:9999}.crf{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;background:#000;touch-action:none;cursor:grab;margin:8px 0}.crf img{position:absolute;left:0;top:0;max-width:none;user-select:none;pointer-events:none}
 </style>
 </head>
 <body>
@@ -414,7 +414,7 @@ $("aplist").onclick=e=>{const c=e.target.closest(".apc");if(!c)return;const a=ac
 function shrink(file,max,cb){if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.78))};im.onerror=()=>alert("Unsupported image format: use JPG or PNG.");im.src=rd.result};rd.readAsDataURL(file)}
 function openAc(reg){const a=reg?acOf(reg):null;adPh=a&&photos[a.reg]||null;$("adreg").value=a?a.reg:"";$("adreg").dataset.old=a?a.reg:"";$("admake").value=a&&a.make||"";$("adtype").value=a&&a.type||"";$("admp").checked=!!(a&&a.mp);$("adeng").value=a&&a.eng||"SE";$("adnote").value=a&&a.note||"";$("addel").hidden=!a;drawAd();$("ad").hidden=false}
 const drawAd=()=>{$("adph").innerHTML=adPh?`<img src="${adPh}" alt="">`:PLANE};
-function cropOpen(file,cb){if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=$("cri");im.onload=()=>{$("crp").hidden=false;requestAnimationFrame(()=>{
+function cropOpen(file,cb){if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=$("cri");im.removeAttribute("src");im.onload=()=>{$("crp").hidden=false;requestAnimationFrame(()=>{
   const fr=$("crf"),fw=fr.clientWidth,fh=fr.clientHeight,iw=im.naturalWidth,ih=im.naturalHeight,s0=Math.max(fw/iw,fh/ih);let z=1,ox=(fw-iw*s0)/2,oy=(fh-ih*s0)/2;$("crz").value=1;
   const put=()=>{const sc=s0*z;ox=Math.min(0,Math.max(fw-iw*sc,ox));oy=Math.min(0,Math.max(fh-ih*sc,oy));im.style.width=iw*sc+"px";im.style.height=ih*sc+"px";im.style.transform=`translate(${ox}px,${oy}px)`};put();
   let d=null;fr.onpointerdown=e=>{d=[e.clientX,e.clientY,ox,oy];fr.setPointerCapture(e.pointerId);fr.style.cursor="grabbing"};
