@@ -365,7 +365,8 @@ function audit(all){const w=[],seen={};
   if(new Date(f.date)>new Date(Date.now()+864e5))w.push(`${l}: date is in the future.`);
   const k=[f.date,f.reg,f.from,f.to,f.total].join("|");if(seen[k])w.push(`${l}: possible duplicate (${f.from}-${f.to}).`);seen[k]=1});
  return all?w:w.filter(x=>!(profile.ign||[]).includes(x))}
-function render(){applyTheme(profile.theme||lsTheme());drawSw();renderOv();renderTot();renderAcs();renderProf();renderPpl();renderCal();renderApt();renderAna();renderEx();
+function syncTypes(){let ch=false;const m={};aircraft.forEach(a=>{if(a.type)m[a.reg]=a.type});flights.forEach(f=>{const t=m[f.reg];if(t&&f.type!==t){f.type=t;ch=true}});if(ch)save()}
+function render(){syncTypes();applyTheme(profile.theme||lsTheme());drawSw();renderOv();renderTot();renderAcs();renderProf();renderPpl();renderCal();renderApt();renderAna();renderEx();
   const w=audit(),dis=audit(true).length-w.length;
   $("audit").innerHTML=(w.length?`<p class="warn"><b>${w.length} controll${w.length>1?"i":"o"} da rivedere</b></p>`+w.slice(0,8).map(x=>`<p class="warn">${esc(x)} <button class="wok alt" data-w="${encodeURIComponent(x)}">✓ Mark as OK</button></p>`).join(""):"")+(dis>0?`<p class="note">${dis} warning${dis>1?"s":""} marked as OK · <button class="wrs alt">Restore</button></p>`:"");
   renderList();
@@ -441,7 +442,7 @@ $("adfile").onchange=e=>{cropOpen(e.target.files[0],d=>{adPh=d;drawAd()});e.targ
 $("adx").onclick=()=>{$("ad").hidden=true};
 $("adsave").onclick=()=>{const reg=$("adreg").value.trim().toUpperCase();if(!reg){alert("Enter the registration.");return}
  const old=$("adreg").dataset.old,a={reg,make:$("admake").value.trim(),type:$("adtype").value.trim().toUpperCase(),mp:$("admp").checked,eng:$("adeng").value,note:$("adnote").value.trim()};
- aircraft=aircraft.filter(x=>x.reg!==old&&x.reg!==reg);aircraft.push(a);
+ aircraft=aircraft.filter(x=>x.reg!==old&&x.reg!==reg);aircraft.push(a);if(old&&old!==reg)flights.forEach(f=>{if(f.reg===old)f.reg=reg});
  if(adPh&&adPh!==photos[reg]){photos[reg]=adPh;putPhoto(reg)}
  if(!$("fm").hidden&&(!F.reg||F.reg===old)){F.reg=reg;F.type=a.type}
  $("ad").hidden=true;$("ap").hidden=true;save();render();if(!$("fm").hidden)drawF()};
